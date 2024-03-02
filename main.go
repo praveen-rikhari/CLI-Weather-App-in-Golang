@@ -8,12 +8,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 )
 
 type Weather struct {
 	Location struct {
 		Name    string `json:"name"`
+		Region  string `json:"region"`
 		Country string `json:"country"`
 	} `json:"location"`
 	Current struct {
@@ -84,13 +86,20 @@ func main() {
 
 	location, current, hours := weather.Location, weather.Current, weather.Forecast.Forecastday[0].Hour
 
+	fmt.Print("\n")
 	fmt.Printf(
-		"%s, %s: %0.f°C , %s\n",
+		"Region: %s, %s\nCountry: %s\nCurrent Temperature: %0.f°C \nCurrent Condition: %s\n",
 		location.Name,
+		location.Region,
 		location.Country,
 		current.TempC,
 		current.Condition.Text,
 	)
+	fmt.Print("\n")
+	color.Magenta("******** TODAY'S WEATHER TIMELINE ********")
+
+	fmt.Print("\n")
+	color.Green("TIME     TEMP     RAIN%    CONDITION")
 
 	for _, hour := range hours {
 		date := time.Unix(hour.TimeEpoch, 0)
@@ -99,12 +108,20 @@ func main() {
 			continue
 		}
 
-		fmt.Printf(
-			"%s - %0.f°C, %0.f%%, %s\n",
+		message := fmt.Sprintf(
+			"%s -> %0.f°C     %0.f%%      %s\n",
 			date.Format("15:04"),
 			hour.TempC,
 			hour.ChanceOfRain,
 			hour.Condition.Text,
 		)
+
+		if hour.ChanceOfRain < 40 {
+			fmt.Print(message)
+		} else if hour.ChanceOfRain > 40 && hour.ChanceOfRain < 70 {
+			color.HiYellow(message)
+		} else {
+			color.HiRed(message)
+		}
 	}
 }
