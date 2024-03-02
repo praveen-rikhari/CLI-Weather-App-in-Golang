@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -49,9 +50,14 @@ func main() {
 		return
 	}
 
+	q := "Noida"
+	if len(os.Args) >= 2 {
+		q = os.Args[1]
+	}
+
 	fmt.Println("Welcome to the weather app.....")
 
-	res, err := http.Get(fmt.Sprintf("http://api.weatherapi.com./v1/forecast.json?key=%s&q=Noida&days=1&aqi=no&alerts=no", apiKey))
+	res, err := http.Get(fmt.Sprintf("http://api.weatherapi.com./v1/forecast.json?key=%s&q="+q+"&days=1&aqi=no&alerts=no", apiKey))
 
 	if err != nil {
 		panic(err)
@@ -74,5 +80,31 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(weather)
+	// fmt.Println(weather)
+
+	location, current, hours := weather.Location, weather.Current, weather.Forecast.Forecastday[0].Hour
+
+	fmt.Printf(
+		"%s, %s: %0.f°C , %s\n",
+		location.Name,
+		location.Country,
+		current.TempC,
+		current.Condition.Text,
+	)
+
+	for _, hour := range hours {
+		date := time.Unix(hour.TimeEpoch, 0)
+
+		if date.Before(time.Now()) {
+			continue
+		}
+
+		fmt.Printf(
+			"%s - %0.f°C, %0.f%%, %s\n",
+			date.Format("15:04"),
+			hour.TempC,
+			hour.ChanceOfRain,
+			hour.Condition.Text,
+		)
+	}
 }
